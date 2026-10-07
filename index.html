@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pointage</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pointage">
+<meta name="theme-color" content="#000000">
+<style>
+:root{--bg:#000;--card:#1c1c1e;--chip:#2c2c2e;--txt:#fff;--mute:#8e8e93;--green:#30d158;--red:#ff453a;--sep:#38383a}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif}
+body{padding:env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 24px);min-height:100vh}
+.view{display:none;max-width:560px;margin:0 auto}.view.on{display:block}
+.bar{display:flex;justify-content:space-between;align-items:center;padding:12px 0}
+.bar .r{display:flex;gap:10px}
+.pill{background:var(--card);border:1px solid var(--sep);color:var(--txt);border-radius:999px;height:46px;min-width:46px;padding:0 18px;font-size:19px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.total{text-align:center;font-size:76px;font-weight:600;margin:24px 0 4px;letter-spacing:-2px}
+.credit{text-align:center;font-size:17px;margin-bottom:28px}
+.pos{color:var(--green)}.neg{color:var(--red)}
+.seg{display:flex;background:var(--card);border-radius:999px;padding:4px;margin-bottom:24px}
+.seg button{flex:1;border:0;background:none;color:var(--txt);font-size:18px;padding:11px;border-radius:999px;cursor:pointer}
+.seg button.on{background:#5a5a5f}
+.list{background:var(--card);border-radius:32px;padding:4px 16px}
+.row{display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid var(--sep);cursor:pointer}
+.row:last-child{border:0}
+.row .t{font-size:24px;font-weight:500}
+.row .d{color:var(--txt);font-size:17px;margin-top:4px}
+.row .v{font-size:28px;font-weight:600;display:flex;align-items:center;gap:12px}
+.row .x{color:var(--red);font-size:24px}
+.empty{color:var(--mute);text-align:center;padding:36px 0}
+h1{font-size:36px;margin:32px 0 18px}
+.lbl{color:var(--mute);font-size:21px;margin:22px 0 10px 14px}
+.box{background:var(--card);border-radius:30px;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.col{display:flex;flex-direction:column;gap:8px;font-size:19px}
+input[type=time],input[type=date],input[type=text],input[type=number]{background:var(--chip);color:var(--txt);border:0;border-radius:999px;padding:11px 16px;font-size:19px;font-family:inherit;color-scheme:dark;max-width:100%}
+.tog{display:flex;background:var(--chip);border-radius:999px;padding:3px;width:100%}
+.tog button{flex:1;border:0;background:none;color:var(--txt);font-size:19px;padding:12px;border-radius:999px;cursor:pointer}
+.tog button.on{background:#fff;color:#000}
+.cta{display:block;margin:36px auto 0;background:var(--green);color:#fff;border:0;border-radius:999px;padding:20px 64px;font-size:22px;font-weight:600;cursor:pointer}
+.ghost{background:var(--card);color:var(--txt);border:1px solid var(--sep);border-radius:20px;padding:14px 18px;font-size:18px;width:100%;margin-top:10px;cursor:pointer;text-align:left}
+.ghost.d{color:var(--red)}
+.wd{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0}
+.wd span{width:90px;font-size:18px}
+.note{color:var(--mute);font-size:15px;margin:10px 14px}
+</style>
+</head>
+<body>
+
+<section id="v-main" class="view on">
+  <div class="bar">
+    <div class="pill" id="b-set" aria-label="Réglages">⚙︎</div>
+    <div class="r"><div class="pill" id="b-add" aria-label="Ajouter">＋</div><div class="pill" id="b-edit">Modifier</div></div>
+  </div>
+  <div class="total" id="total">0</div>
+  <div class="credit" id="credit"></div>
+  <div class="seg"><button id="t-cur" class="on">en cours</button><button id="t-arc">archivés</button></div>
+  <div class="list" id="list"></div>
+</section>
+
+<section id="v-form" class="view">
+  <div class="bar"><div class="pill" id="f-back">‹</div></div>
+  <h1 id="f-title">Ajouter un pointage</h1>
+  <div class="lbl">Mes horaires de travail ce jour-là</div>
+  <div class="box">
+    <div class="col">Entrée<input type="time" id="f-rin"></div>
+    <div class="col" style="align-items:flex-end">Sortie<input type="time" id="f-rout"></div>
+  </div>
+  <div class="lbl">J'enregistre mon heure…</div>
+  <div class="box"><div class="tog"><button id="g-in" class="on">d'entrée</button><button id="g-out">de sortie</button></div></div>
+  <div class="lbl" id="f-lbl">Heure d'arrivée</div>
+  <div class="box" style="justify-content:flex-start"><input type="date" id="f-date"><input type="time" id="f-time"></div>
+  <button class="cta" id="f-ok">Ajouter</button>
+</section>
+
+<section id="v-set" class="view">
+  <div class="bar"><div class="pill" id="s-back">‹</div></div>
+  <h1>Réglages</h1>
+  <div class="lbl">Horaires par défaut</div>
+  <div class="box" style="flex-direction:column;align-items:stretch" id="s-sched"></div>
+  <div class="lbl">Crédit du mois dernier (minutes)</div>
+  <div class="box"><input type="number" id="s-credit" style="width:100%" inputmode="numeric"></div>
+  <div class="lbl">Données</div>
+  <button class="ghost" id="s-arch">Archiver la période en cours</button>
+  <button class="ghost" id="s-exp">Exporter (fichier JSON)</button>
+  <button class="ghost" id="s-imp">Importer (fichier JSON)</button>
+  <button class="ghost d" id="s-del">Tout effacer</button>
+  <input type="file" id="s-file" accept="application/json,.json" hidden>
+  <div class="note">Les données restent sur ce téléphone. Exporte régulièrement une sauvegarde.</div>
+</section>
+
+<script src="app.js"></script>
+</body>
+</html>
