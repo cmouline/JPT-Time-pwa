@@ -6,7 +6,7 @@ const pad = n => String(n).padStart(2, '0');
 const mins = hhmm => { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m; };
 
 function fresh() {
-  return { entries: [], schedule: DAYS.map(() => ({ in: '09:00', out: '17:15' })), lastCredit: 0 };
+  return { entries: [], schedule: DAYS.map(() => ({ in: '09:00', out: '17:15' })), lastCredit: 0, month: '' };
 }
 function load() {
   try { const d = JSON.parse(localStorage.getItem(KEY)); if (d && Array.isArray(d.entries)) return Object.assign(fresh(), d); } catch (e) {}
@@ -21,6 +21,28 @@ function delta(e) {
   const act = d.getHours() * 60 + d.getMinutes();
   const ref = mins(e.ref);
   return e.type === 'in' ? ref - act : act - ref;
+}
+// ---------- Changement de mois ----------
+const monthKey = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+// Archive tout pointage d'un mois révolu. Le total du mois précédent devient le « crédit du mois dernier ».
+function rollover() {
+  const now = new Date();
+  const nowKey = monthKey(now);
+  const prevKey = monthKey(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+  const old = S.entries.filter(e => !e.archived && monthKey(new Date(e.ts)) < nowKey);
+  const newMonth = S.month !== nowKey;
+  let changed = newMonth;
+  if (old.length) {
+    const prev = old.filter(e => monthKey(new Date(e.ts)) === prevKey);
+    const sum = prev.reduce((a, e) => a + delta(e), 0);
+    if (newMonth) S.lastCredit = sum;
+    else if (prev.length) S.lastCredit = (S.lastCredit || 0) + sum; // pointage oublié, ajouté après coup
+    old.forEach(e => { e.archived = true; });
+    changed = true;
+  }
+  S.month = nowKey;
+  if (changed) save();
+  return changed;
 }
 function fmtRow(n) { return (n > 0 ? '+' : n < 0 ? '−' : '') + Math.abs(n); }
 function fmtTot(n) {
@@ -107,7 +129,7 @@ $('#f-ok').onclick = () => {
   } else {
     S.entries.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), type: F.type, ts, ref, archived: false });
   }
-  save(); renderMain(); show('v-main');
+  rollover(); save(); renderMain(); show('v-main');
 };
 $('#f-back').onclick = () => show('v-main');
 
@@ -162,6 +184,9 @@ $('#b-set').onclick = () => { renderSettings(); show('v-set'); };
 $('#t-cur').onclick = () => { tab = 'cur'; renderMain(); };
 $('#t-arc').onclick = () => { tab = 'arc'; renderMain(); };
 
+rollover();
 renderMain();
+// L'appli reste souvent ouverte en arrière-plan sur iPhone : on revérifie au retour au premier plan.
+document.addEventListener('visibilitychange', () => { if (!document.hidden && rollover()) { renderMain(); } });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 })();
