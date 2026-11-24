@@ -110,6 +110,7 @@ function fillForm() {
   $('#g-out').classList.toggle('on', F.type === 'out');
   $('#f-lbl').textContent = F.type === 'in' ? "Heure d'arrivée" : 'Heure de sortie';
   $('#f-ok').textContent = F.id ? 'Enregistrer' : 'Ajouter';
+  $('#f-del').style.display = F.id ? 'block' : 'none';
 }
 $('#g-in').onclick = () => { F.type = 'in'; fillForm(); };
 $('#g-out').onclick = () => { F.type = 'out'; fillForm(); };
@@ -132,6 +133,10 @@ $('#f-ok').onclick = () => {
   rollover(); save(); renderMain(); show('v-main');
 };
 $('#f-back').onclick = () => show('v-main');
+$('#f-del').onclick = () => {
+  if (!F || !F.id) return;
+  if (confirm('Supprimer ce pointage ?')) { S.entries = S.entries.filter(x => x.id !== F.id); save(); renderMain(); show('v-main'); }
+};
 
 // ---------- Réglages ----------
 function renderSettings() {
